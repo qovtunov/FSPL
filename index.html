@@ -101,7 +101,9 @@
   .cov-r-v{font-family:var(--mono);font-size:26px;font-weight:600;color:#eafff6;margin-top:3px;}
   .cov-r-v span:last-child{font-size:14px;color:var(--muted);}
   .cov-sub{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:2px;}
-  .cov-svg{width:100%;height:auto;margin-top:2px;}
+  .cov-body{display:flex;gap:12px;align-items:flex-start;}
+  .cov-main{flex:1;min-width:0;}
+  .cov-svg{width:184px;flex-shrink:0;height:auto;margin-top:-38px;}
   .cov-note{margin-top:8px;display:block;}
   .flag{border-radius:8px;padding:9px 13px;font-size:12.5px;margin-bottom:12px;display:none;}
   .flag.show{display:block;}
@@ -232,26 +234,30 @@
       </div>
       <div class="cov-wrap">
         <p class="chart-t" data-i="cov_title"></p>
-        <div class="cov-presets" id="covPresets">
-          <button data-a="40">10 dBi · 40°</button>
-          <button data-a="36">14 dBi · 36°</button>
-          <button data-a="16" class="on">17 dBi · 16°</button>
+        <div class="cov-body">
+          <div class="cov-main">
+            <div class="cov-presets" id="covPresets">
+              <button data-a="40">10 dBi · 40°</button>
+              <button data-a="36">14 dBi · 36°</button>
+              <button data-a="16" class="on">17 dBi · 16°</button>
+            </div>
+            <div class="row" style="margin-top:10px;">
+              <label data-i="cov_angle"></label>
+              <input type="number" id="covAngle" value="16" step="1" min="1" max="179">
+            </div>
+            <div class="row">
+              <label data-i="cov_dist"></label>
+              <input type="number" id="covDist" value="10" step="1" min="0">
+            </div>
+            <div class="cov-result">
+              <div class="cov-r-l" data-i="cov_width"></div>
+              <div class="cov-r-v"><span id="covWidth">—</span> <span data-i="unit_km"></span></div>
+              <div class="cov-sub" id="covSub"></div>
+            </div>
+            <div class="cov-note f-sym" data-i="cov_note"></div>
+          </div>
+          <svg id="covSvg" viewBox="0 0 80 140" class="cov-svg"></svg>
         </div>
-        <div class="row" style="margin-top:10px;">
-          <label data-i="cov_angle"></label>
-          <input type="number" id="covAngle" value="16" step="1" min="1" max="179">
-        </div>
-        <div class="row">
-          <label data-i="cov_dist"></label>
-          <input type="number" id="covDist" value="10" step="1" min="0">
-        </div>
-        <div class="cov-result">
-          <div class="cov-r-l" data-i="cov_width"></div>
-          <div class="cov-r-v"><span id="covWidth">—</span> <span data-i="unit_km"></span></div>
-          <div class="cov-sub" id="covSub"></div>
-        </div>
-        <svg id="covSvg" viewBox="0 0 200 110" class="cov-svg"></svg>
-        <div class="cov-note f-sym" data-i="cov_note"></div>
       </div>
     </div>
   </div>
@@ -521,17 +527,17 @@ function covCalc(){
 function drawCov(ang,d,w){
   const svg=$('covSvg'); if(!svg) return;
   const half=Math.max(ang,1)*Math.PI/360;
-  const ax=14, ay=55, maxLx=128, maxLy=44;
-  const L=Math.min(maxLx/Math.cos(half), maxLy/Math.sin(half));
-  const ex=ax+L*Math.cos(half), ty=ay-L*Math.sin(half), by=ay+L*Math.sin(half);
+  const ax=40, apexY=124, maxX=30, maxY=92;
+  const Lc=Math.min(maxX/Math.sin(half), maxY/Math.cos(half));
+  const topY=apexY-Lc*Math.cos(half);
+  const lx=ax-Lc*Math.sin(half), rx=ax+Lc*Math.sin(half);
   const wTxt=(isFinite(w)&&w>0)?(w>=10?w.toFixed(1):w.toFixed(2)):'—';
   svg.innerHTML=
-    `<line x1="${ax}" y1="${ay}" x2="${ex.toFixed(1)}" y2="${ay}" stroke="#566460" stroke-width="1" stroke-dasharray="3 2"/>`+
-    `<path d="M${ax} ${ay} L${ex.toFixed(1)} ${ty.toFixed(1)} L${ex.toFixed(1)} ${by.toFixed(1)} Z" fill="rgba(61,219,154,0.12)" stroke="#3ddb9a" stroke-width="1.5"/>`+
-    `<line x1="${ex.toFixed(1)}" y1="${ty.toFixed(1)}" x2="${ex.toFixed(1)}" y2="${by.toFixed(1)}" stroke="#f5b945" stroke-width="2"/>`+
-    `<circle cx="${ax}" cy="${ay}" r="3" fill="#3ddb9a"/>`+
-    `<text x="${((ax+ex)/2).toFixed(1)}" y="${ay-4}" fill="#7d908b" font-size="8" text-anchor="middle" font-family="monospace">${d} ${T[lang].unit_km}</text>`+
-    `<text x="${(ex+5).toFixed(1)}" y="${ay+3}" fill="#f5b945" font-size="9" text-anchor="start" font-family="monospace">${wTxt}</text>`;
+    `<line x1="${ax}" y1="${apexY}" x2="${ax}" y2="${topY.toFixed(1)}" stroke="#566460" stroke-width="1" stroke-dasharray="3 2"/>`+
+    `<path d="M${ax} ${apexY} L${lx.toFixed(1)} ${topY.toFixed(1)} L${rx.toFixed(1)} ${topY.toFixed(1)} Z" fill="rgba(61,219,154,0.12)" stroke="#3ddb9a" stroke-width="1.5"/>`+
+    `<line x1="${lx.toFixed(1)}" y1="${topY.toFixed(1)}" x2="${rx.toFixed(1)}" y2="${topY.toFixed(1)}" stroke="#f5b945" stroke-width="2"/>`+
+    `<circle cx="${ax}" cy="${apexY}" r="2.5" fill="#3ddb9a"/>`+
+    `<text x="${ax}" y="${(topY-5).toFixed(1)}" fill="#f5b945" font-size="11" text-anchor="middle" font-family="monospace">${wTxt}</text>`;
 }
 document.querySelectorAll('#covPresets button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('#covPresets button').forEach(x=>x.classList.remove('on'));
